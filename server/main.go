@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
 	"golang.org/x/time/rate"
 	"log"
@@ -98,6 +99,10 @@ func main() {
 			}
 			go handleSession(session)
 		}),
+		QUICConfig: &quic.Config{
+			MaxIncomingStreams:    10000, // Allow up to 10000 concurrent bidirectional streams
+			MaxIncomingUniStreams: 10000, // Allow up to 10000 concurrent unidirectional streams
+		},
 	}
 
 	log.Println("WebTransport server running on :4433 (HTTP/3)")
