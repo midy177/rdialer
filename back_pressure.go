@@ -1,111 +1,113 @@
 package rdialer
 
 import (
-	"context"
+	"errors"
 	"sync"
+	"time"
 )
 
-type backPressureConn interface {
-	Pause()
-	Resume()
+// BackPressure 接口定义了背压控制的基本方法
+type BackPressure interface {
+	ShouldWait() bool
+	Wait() error
+	Update(bytesWritten int)
+	Close()
 }
 
-type backPressure struct {
-	cond   sync.Cond
-	c      backPressureConn
-	paused bool
-	closed bool
+// streamBackPressure 实现了针对单个 WebTransport Stream 的背压控制
+type streamBackPressure struct {
+	mu             sync.Mutex
+	pendingBytes   int           // 待处理的字节数
+	threshold      int           // 触发背压的阈值
+	waitTimeout    time.Duration // 等待超时时间
+	closed         bool
+	lastUpdateTime time.Time
 }
 
-var backPressurePool = sync.Pool{
+var streamBackPressurePool = sync.Pool{
 	New: func() interface{} {
-		return &backPressure{
-			cond: sync.Cond{
-				L: &sync.Mutex{},
-			},
+		return &streamBackPressure{
+			threshold:      1024 * 1024, // 默认 1MB 阈值
+			waitTimeout:    5 * time.Second,
+			lastUpdateTime: time.Now(),
 		}
 	},
 }
 
-type BackPressure interface {
-	OnPause()
-	OnResume()
-	Close()
-	Pause()
-	Resume()
-	Wait(cancel context.CancelFunc)
-}
-
-func NewBackPressure(c backPressureConn) BackPressure {
-	bp := backPressurePool.Get().(*backPressure)
-	bp.c = c
-	bp.paused = false
+// NewStreamBackPressure 创建一个新的流背压控制器
+func NewStreamBackPressure() BackPressure {
+	bp := streamBackPressurePool.Get().(*streamBackPressure)
+	bp.pendingBytes = 0
 	bp.closed = false
+	bp.lastUpdateTime = time.Now()
 	return bp
 }
 
-func (b *backPressure) OnPause() {
-	b.cond.L.Lock()
-	defer b.cond.L.Unlock()
+// ShouldWait 判断是否需要等待（应用背压）
+func (s *streamBackPressure) ShouldWait() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	b.paused = true
-	b.cond.Broadcast()
-}
-
-func (b *backPressure) Close() {
-	b.cond.L.Lock()
-	defer b.cond.L.Unlock()
-
-	// 避免同一个 backPressure 对象被多次放回对象池
-	if !b.closed {
-		b.closed = true
-		b.cond.Broadcast()
-		// 重置状态并放回池中
-		b.c = nil
-		b.paused = false
-		backPressurePool.Put(b)
+	if s.closed {
+		return false
 	}
+
+	// 如果待处理字节数超过阈值，或者最后更新时间超过一定时间，则应用背压
+	return s.pendingBytes > s.threshold ||
+		time.Since(s.lastUpdateTime) > 2*time.Second
 }
 
-func (b *backPressure) OnResume() {
-	b.cond.L.Lock()
-	defer b.cond.L.Unlock()
+// Wait 等待直到可以继续发送数据
+func (s *streamBackPressure) Wait() error {
+	if !s.ShouldWait() {
+		return nil
+	}
 
-	b.paused = false
-	b.cond.Broadcast()
+	// 简单的等待策略：睡眠一小段时间
+	timer := time.NewTimer(s.waitTimeout)
+	defer timer.Stop()
+
+	start := time.Now()
+	for s.ShouldWait() {
+		if time.Since(start) > s.waitTimeout {
+			return errors.New("背压等待超时")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	return nil
 }
 
-func (b *backPressure) Pause() {
-	b.cond.L.Lock()
-	defer b.cond.L.Unlock()
-	if b.paused {
+// Update 更新背压状态
+func (s *streamBackPressure) Update(bytesWritten int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.closed {
 		return
 	}
-	b.c.Pause()
-	b.paused = true
+
+	// 更新待处理字节数和最后更新时间
+	s.pendingBytes += bytesWritten
+	s.lastUpdateTime = time.Now()
+
+	// 如果确认处理了一些数据，减少待处理字节数
+	if bytesWritten < 0 {
+		s.pendingBytes += bytesWritten // bytesWritten 为负值，表示已处理的字节数
+		if s.pendingBytes < 0 {
+			s.pendingBytes = 0
+		}
+	}
 }
 
-func (b *backPressure) Resume() {
-	b.cond.L.Lock()
-	defer b.cond.L.Unlock()
-	if !b.paused {
-		return
-	}
-	b.c.Resume()
-	b.paused = false
-}
+// Close 关闭背压控制器并释放资源
+func (s *streamBackPressure) Close() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-func (b *backPressure) Wait(cancel context.CancelFunc) {
-	b.cond.L.Lock()
-	defer b.cond.L.Unlock()
-
-	if b.closed || !b.paused {
-		return
-	}
-	// 只在开始等待时调用一次 cancel
-	cancel()
-
-	for !b.closed && b.paused {
-		b.cond.Wait()
+	if !s.closed {
+		s.closed = true
+		s.pendingBytes = 0
+		streamBackPressurePool.Put(s)
 	}
 }
