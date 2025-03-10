@@ -12,6 +12,7 @@ type MessageType int64
 
 const (
 	Connect MessageType = iota + 1
+	KeepAlive
 )
 
 var (
@@ -108,5 +109,10 @@ func (e *EncodeBuffer) WriteTo(w io.Writer) (int64, error) {
 
 func SendConnectMessage(w io.Writer, proto, address string) (int64, error) {
 	eb := NewEncodeBuffer(Connect, []byte(fmt.Sprintf("%s/%s", proto, address)))
+	return eb.WriteTo(w)
+}
+
+func SendKeepAliveMessage(w io.Writer) (int64, error) {
+	eb := NewEncodeBuffer(KeepAlive, nil)
 	return eb.WriteTo(w)
 }

@@ -2,72 +2,97 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"io"
-	"log"
+	"net"
 	"net/http"
 	"rdialer"
-	"sync"
+	"strconv"
 	"time"
 )
 
 func main() {
-	client, err := rdialer.NewClient("https://127.0.0.1:8443/connect")
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
+	client, err := rdialer.NewClient("https://192.168.12.40:8443/connect")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Msg("Failed to create NewClient")
 	}
 	header := make(http.Header)
 	header.Set("tunnel-id", "1234")
-	err = client.Connect(context.Background(), header)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Close()
-	// 获取自定义 Dialer
-	dialer, err := client.GetDialer()
-	if err != nil {
-		log.Fatal(err)
-	}
+	go func() {
+		for {
+			err = client.Connect(context.Background(), header)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to connect to rdialer,after 10s retry")
+			}
+			client.Close()
+			time.Sleep(10 * time.Second)
+		}
+	}()
+
 	// 创建自定义传输层
 	transport := &http.Transport{
-		DialContext: dialer,
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			// 获取自定义 Dialer
+			dialer, err := client.GetDialer()
+			if err != nil {
+				log.Fatal().Err(err).Msg("Failed to get remote dialer")
+			}
+			return dialer(ctx, network, addr)
+		},
 	}
-	//httpGet(transport)
-	wg := &sync.WaitGroup{}
-	sg := make(chan struct{}, 10)
-	for i := 0; i < 1000; i++ {
-		time.Sleep(1 * time.Second)
-		wg.Add(1)
-		sg <- struct{}{}
-		go func() {
-			httpGet(transport)
-			<-sg
-			wg.Done()
-		}()
-	}
-	time.Sleep(3 * time.Second)
+	e := echo.New()
+	e.GET("/:scheme/:host", func(c echo.Context) error {
+		return Client(transport, c)
+	})
+
+	log.Fatal().Err(e.Start(":1323")).Send()
 }
 
-func httpGet(transport *http.Transport) {
-	// 创建 HTTP 客户端
-	httpClient := &http.Client{
-		Transport: transport,
+func Client(transport *http.Transport, c echo.Context) error {
+	rw := c.Response().Writer
+	timeout := c.QueryParam("timeout")
+	if timeout == "" {
+		timeout = "15"
 	}
+	scheme := c.Param("scheme")
+	host := c.Param("host")
+	url := fmt.Sprintf("%s://%s%s", scheme, host, "")
+	client := getClient(transport, timeout)
 
-	// 发起 HTTP GET 请求
-	resp, err := httpClient.Get("http://baidu.com")
+	resp, err := client.Get(url)
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 	defer resp.Body.Close()
 
-	// 读取响应内容
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		return
+	for k, v := range resp.Header {
+		for _, h := range v {
+			if c.Request().Header.Get(k) == "" {
+				c.Response().Header().Set(k, h)
+			} else {
+				c.Response().Header().Add(k, h)
+			}
+		}
 	}
+	rw.WriteHeader(resp.StatusCode)
+	_, err = io.Copy(rw, resp.Body)
+	return err
+}
 
-	log.Printf("响应状态码: %d\n", resp.StatusCode)
-	log.Printf("响应内容: %s\n", string(body))
+func getClient(transport *http.Transport, timeout string) *http.Client {
+	client := &http.Client{
+		Transport: transport,
+	}
+	if timeout != "" {
+		t, err := strconv.Atoi(timeout)
+		if err == nil {
+			client.Timeout = time.Duration(t) * time.Second
+		}
+	}
+	return client
 }

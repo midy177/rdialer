@@ -2,9 +2,9 @@ package rdialer
 
 import (
 	"context"
-	"github.com/quic-go/webtransport-go"
+	"github.com/midy177/webtransport-go"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/time/rate"
-	"log"
 	"sync/atomic"
 )
 
@@ -23,19 +23,25 @@ var (
 
 // handleSession 处理单个 WebTransport 会话
 func handleSession(clientKey string, session *webtransport.Session) {
+	remoteAddr := session.RemoteAddr()
+	localAddr := session.LocalAddr()
 	// 添加连接级别的限流器
 	limiter := rate.NewLimiter(rate.Limit(RateLimit), RateBurst) // 每秒1000个请求，突发100
 	var stats streamStats
+	log.Info().Str("LocalAddr", localAddr.String()).Str("RemoteAddr", remoteAddr.String()).
+		Str("clientKey", clientKey).Msg("session accept stream loop")
 	for {
 		// 限流控制
-		if err := limiter.Wait(context.Background()); err != nil {
-			log.Printf("[%s]:Rate limit exceeded: %s\n", clientKey, err)
+		if err := limiter.Wait(context.TODO()); err != nil {
+			log.Warn().Str("LocalAddr", localAddr.String()).Str("RemoteAddr", remoteAddr.String()).
+				Str("ClientKey", clientKey).Err(err).Msg("rate limit exceeded")
 			continue
 		}
 		// 接受新的流
-		stream, err := session.AcceptStream(context.Background())
+		stream, err := session.AcceptStream(context.TODO())
 		if err != nil {
-			log.Printf("[%s]:Stream accept failed: %s\n", clientKey, err)
+			log.Warn().Str("LocalAddr", localAddr.String()).Str("RemoteAddr", remoteAddr.String()).
+				Str("ClientKey", clientKey).Err(err).Msg("accept stream failed")
 			return
 		}
 
@@ -43,7 +49,7 @@ func handleSession(clientKey string, session *webtransport.Session) {
 
 		// 处理流
 		go func() {
-			handleStream(stream)
+			handleStream(stream, remoteAddr, localAddr)
 			atomic.AddInt64(&stats.activeStreams, -1)
 		}()
 	}

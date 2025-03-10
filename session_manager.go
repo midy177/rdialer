@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/quic-go/webtransport-go"
+	"github.com/midy177/webtransport-go"
 	"golang.org/x/exp/rand"
 )
 

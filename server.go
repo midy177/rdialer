@@ -8,16 +8,16 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
-	"log"
 	"math/big"
 	"net/http"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/midy177/webtransport-go"
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
-	"github.com/quic-go/webtransport-go"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -150,11 +150,11 @@ func (s *Server) Start() error {
 	_, _keyErr := os.Stat(s.certificateKey)
 	if os.IsNotExist(_certErr) || os.IsNotExist(_keyErr) {
 		if err := generateCertificate(s.certificate, s.certificateKey); err != nil {
-			log.Fatal("Failed to generate certificate:", err)
+			log.Fatal().Err(err).Msg("failed to generate certificate")
 		}
-		log.Println("Generated new certificate files")
+		log.Info().Msg("Generated new certificate files")
 	}
-	log.Printf("WebTransport 服务器启动在 %s", s.addr)
+	log.Info().Msgf("Listening on %s", s.addr)
 	return s.wtServer.ListenAndServeTLS(s.certificate, s.certificateKey)
 }
 
@@ -194,12 +194,13 @@ func (s *Server) SetHandleFuncPattern(pattern string) {
 		}
 		session, err := s.wtServer.Upgrade(w, r)
 		if err != nil {
-			log.Println("Upgrade failed:", err)
+			log.Err(err).Msg("Upgrade failed")
 			return
 		}
 		s.sessions.add(clientKey, session)
 		defer s.sessions.remove(clientKey, session)
 		handleSession(clientKey, session)
+		log.Info().Str("ClientKey", clientKey).Msg("Session remove")
 	})
 }
 

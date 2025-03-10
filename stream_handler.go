@@ -3,47 +3,71 @@ package rdialer
 import (
 	"context"
 	"errors"
+	"github.com/rs/zerolog/log"
 	"io"
-	"log"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/quic-go/webtransport-go"
+	"github.com/midy177/webtransport-go"
 )
 
 // handleStream 处理单个流
-func handleStream(stream webtransport.Stream) {
+func handleStream(stream webtransport.Stream, remoteAddr, localAddr net.Addr) {
 	defer stream.Close()
 
 	// 创建解码缓冲区
 	decodeBuffer := NewDecodeBuffer()
-
 	// 读取消息
 	n, err := decodeBuffer.ReadFrom(stream)
 	if err != nil {
-		log.Printf("读取消息失败: %v\n", err)
+		log.Error().Str("LocalAddr", localAddr.String()).Str("RemoteAddr", remoteAddr.String()).Err(err).Msg("read from stream")
 		return
 	}
 
-	if decodeBuffer.MessageType != Connect {
-		_ = stream.Close()
-		return
+	switch decodeBuffer.MessageType {
+	case KeepAlive:
+		doKeepalive(stream, remoteAddr, localAddr)
+	case Connect:
+		str := strings.Split(string(decodeBuffer.Buffer[:n]), "/")
+		if len(str) != 2 {
+			log.Error().Str("LocalAddr", localAddr.String()).Str("RemoteAddr", remoteAddr.String()).Msg("connect proto address error")
+			return
+		}
+		conn, err := newConnection(stream, str[0], str[1])
+		if err != nil {
+			log.Error().Str("LocalAddr", localAddr.String()).Str("RemoteAddr", remoteAddr.String()).Err(err).Msg("new connection")
+			return
+		}
+		log.Debug().Str("LocalAddr", localAddr.String()).Str("RemoteAddr", remoteAddr.String()).Msgf("proto: %s address: %s", str[0], str[1])
+		doDial(context.TODO(), conn, str[0], str[1])
+	default:
+		log.Error().Str("LocalAddr", localAddr.String()).Str("RemoteAddr", remoteAddr.String()).
+			Str("Type", strconv.FormatInt(int64(decodeBuffer.MessageType), 10)).Msg("Unsupported message type")
 	}
-	str := strings.Split(string(decodeBuffer.Buffer[:n]), "/")
+}
 
-	if len(str) != 2 {
-		log.Printf("Connect proto address error\n")
-		return
+func doKeepalive(stream webtransport.Stream, remoteAddr, localAddr net.Addr) {
+	streamID := stream.StreamID()
+	keepMsg := make([]byte, 1)
+	for {
+		_, err := stream.Read(keepMsg)
+		if err != nil {
+			log.Error().Str("LocalAddr", localAddr.String()).Str("RemoteAddr", remoteAddr.String()).Err(err).Msg("read keepalive")
+			return
+		}
+		log.Debug().Str("LocalAddr", localAddr.String()).Str("RemoteAddr", remoteAddr.String()).
+			Int64("StreamID", int64(streamID)).Str("Role", "server").Msg("read keepalive")
+		_, err = stream.Write(keepMsg)
+		if err != nil {
+			log.Error().Str("LocalAddr", localAddr.String()).Str("RemoteAddr", remoteAddr.String()).Err(err).Msg("write keepalive")
+			return
+		}
+		log.Debug().Str("LocalAddr", localAddr.String()).Str("RemoteAddr", remoteAddr.String()).
+			Int64("StreamID", int64(streamID)).Str("Role", "server").Msg("send keepalive")
 	}
-	conn, err := newConnection(stream, str[0], str[1])
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	log.Printf("proto: %s address: %s\n", str[0], str[1])
-	DoDial(context.Background(), conn, str[0], str[1])
 }
 
 type Hijacker func(ctx context.Context, conn net.Conn, proto, address string) (next bool)
@@ -52,7 +76,7 @@ var DialHijack Hijacker = func(ctx context.Context, conn net.Conn, proto, addres
 	return true
 }
 
-func DoDial(ctx context.Context, conn net.Conn, proto, address string) {
+func doDial(ctx context.Context, conn net.Conn, proto, address string) {
 	// Do client hijacker
 	if !DialHijack(ctx, conn, proto, address) {
 		_ = conn.Close()

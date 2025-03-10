@@ -5,15 +5,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="02db1935-4b00-4d4f-b8c7-7b6d6efd3e97" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/client/main.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/connection.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/session_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/back_pressure.go" beforeDir="false" afterPath="$PROJECT_DIR$/back_pressure.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/logger.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/connection.go" beforeDir="false" afterPath="$PROJECT_DIR$/connection.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dialer.go" beforeDir="false" afterPath="$PROJECT_DIR$/dialer.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frame_message.go" beforeDir="false" afterPath="$PROJECT_DIR$/frame_message.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/cert.pem" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/key.pem" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/session_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/session_handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/session_manager.go" beforeDir="false" afterPath="$PROJECT_DIR$/session_manager.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stream_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/stream_handler.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,7 +32,7 @@
       </list>
     </option>
   </component>
-  <component name="GOROOT" url="file:///usr/local/go" />
+  <component name="GOROOT" url="file://$PROJECT_DIR$/../../Program Files/Go" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -52,7 +57,7 @@
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
     &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
     &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/medy/Desktop/rdialer&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Other/webtransport-go&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
@@ -64,9 +69,10 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Go 构建.go build rdialer/server">
+  <component name="RunManager" selected="Go 构建.go build rdialer/client">
     <configuration name="go build rdialer/client" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="rdialer" />
+      <target name="WSL - Ubuntu-24.04" />
       <working_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
       <package value="rdialer/client" />
@@ -83,6 +89,10 @@
       <filePath value="$PROJECT_DIR$/server/main.go" />
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Go 构建.go build rdialer/client" />
+      <item itemvalue="Go 构建.go build rdialer/server" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Go 构建.go build rdialer/server" />
@@ -93,8 +103,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-d297c17c1fbd-57c114c3cede-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-243.25659.52" />
-        <option value="bundled-js-predefined-d6986cc7102b-1632447f56bf-JavaScript-GO-243.25659.52" />
+        <option value="bundled-gosdk-d297c17c1fbd-57c114c3cede-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-243.24978.59" />
+        <option value="bundled-js-predefined-d6986cc7102b-76f8388c3a79-JavaScript-GO-243.24978.59" />
       </set>
     </attachedChunks>
   </component>

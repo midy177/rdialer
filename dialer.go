@@ -2,7 +2,7 @@ package rdialer
 
 import (
 	"context"
-	"github.com/quic-go/webtransport-go"
+	"github.com/midy177/webtransport-go"
 	"net"
 )
 

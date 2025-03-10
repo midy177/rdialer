@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/quic-go/webtransport-go"
+	"github.com/midy177/webtransport-go"
 )
 
 type connection struct {
