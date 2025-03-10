@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type MessageType int64
+type MessageType uint8
 
 const (
 	Connect MessageType = iota + 1

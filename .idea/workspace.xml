@@ -4,21 +4,9 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="02db1935-4b00-4d4f-b8c7-7b6d6efd3e97" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/logger.go" afterDir="false" />
+    <list default="true" id="02db1935-4b00-4d4f-b8c7-7b6d6efd3e97" name="更改" comment="优化">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/connection.go" beforeDir="false" afterPath="$PROJECT_DIR$/connection.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dialer.go" beforeDir="false" afterPath="$PROJECT_DIR$/dialer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frame_message.go" beforeDir="false" afterPath="$PROJECT_DIR$/frame_message.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/session_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/session_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/session_manager.go" beforeDir="false" afterPath="$PROJECT_DIR$/session_manager.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stream_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/stream_handler.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -95,8 +83,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go 构建.go build rdialer/server" />
         <item itemvalue="Go 构建.go build rdialer/client" />
+        <item itemvalue="Go 构建.go build rdialer/server" />
       </list>
     </recent_temporary>
   </component>
@@ -111,6 +99,10 @@
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="应用程序级" UseSingleDictionary="true" transferred="true" />
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="优化" />
+    <option name="LAST_COMMIT_MESSAGE" value="优化" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
